@@ -1,6 +1,8 @@
 package dev.lvstrng.aidsfuscator.transform;
 
 import dev.lvstrng.aidsfuscator.transform.impl.data.IntegerEncryptTransformer;
+import dev.lvstrng.aidsfuscator.transform.impl.misc.MemberShuffler;
+import dev.lvstrng.aidsfuscator.transform.impl.misc.WatermarkTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.rename.ClassRenameTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.rename.FieldRenameTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.rename.MethodRenameTransformer;
@@ -22,7 +24,10 @@ public final class TransformerOrder {
             new LocalVariableNameTransformer(),
             new MethodSaltTransformer(),
 
-            new IntegerEncryptTransformer()
+            new IntegerEncryptTransformer(),
+
+            new MemberShuffler(),
+            new WatermarkTransformer()
     );
 
     @SuppressWarnings("unchecked")
