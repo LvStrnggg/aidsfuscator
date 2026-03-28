@@ -1,0 +1,31 @@
+package dev.lvstrng.aidsfuscator.transform.impl.misc;
+
+import dev.lvstrng.aidsfuscator.context.Context;
+import dev.lvstrng.aidsfuscator.transform.Transformer;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.FieldNode;
+
+public class WatermarkTransformer extends Transformer {
+
+    public WatermarkTransformer() {
+        super("Adds Watermark", "Watermark");
+    }
+
+    @Override
+    public void transform(Context context) {
+         for (var Clazz : context.classes()) {
+             var cn = Clazz.core(); 
+             if ((cn.access & ACC_INTERFACE) != 0) continue;
+             var stringname = "AidsFuscator";
+             if (cn.fields != null && cn.fields.stream().anyMatch(f -> f != null && stringname.equals(f.name))) continue; // 0.000001%
+             cn.fields.add(new FieldNode(
+                     ACC_VOLATILE,
+                     stringname,
+                     "Ljava/lang/String;",
+                     null,
+                     "dsc.gg/aidsfuscator"
+                     )
+             );
+         }
+    }
+}

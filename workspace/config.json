@@ -22,6 +22,12 @@
     },
     "integerEncrypt": {
       "enabled": true
+    },
+    "MemberShuffler": {
+      "enabled": true
+    },
+    "Watermark": {
+      "enabled": true
     }
   }
 }
