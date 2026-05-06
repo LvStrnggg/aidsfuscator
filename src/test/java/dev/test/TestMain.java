@@ -27,7 +27,8 @@ public class TestMain {
         context.transform(
                 new MethodSaltTransformer(),
                 new SimpleClassSaltTransformer(),
-                new StringEncryptTransformer()
+                new StringEncryptTransformer(),
+                new MethodParameterObfuscationTransformer()
         ).exportJar();
     }
 }

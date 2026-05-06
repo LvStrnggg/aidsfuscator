@@ -13,6 +13,7 @@ import dev.lvstrng.aidsfuscator.utils.MemberUtils;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -43,9 +44,7 @@ public class MethodParameterObfuscationTransformer extends Transformer {
 
             var args = Type.getArgumentTypes(desc);
             var refs = new LinkedHashSet<MethodCallNode>();
-            for(var member : this.populateHierarchy(method)) {
-                refs.addAll(graph.refs(member));
-            }
+            refs.addAll(graph.refs(method));
 
             for(var node : refs) {
                 var call = (MethodInsnNode) node.insn();
@@ -71,7 +70,7 @@ public class MethodParameterObfuscationTransformer extends Transformer {
                 }
 
                 node.caller().insns().insertBefore(call, list.result());
-                call.desc = method.desc();
+                call.desc = node.method().desc();
             }
 
             if(method.hasSalt())
@@ -126,15 +125,18 @@ public class MethodParameterObfuscationTransformer extends Transformer {
         if(this.isIgnoredSynthetic(method))
             return;
 
-        var hierarchy = this.populateHierarchy(method);
+        var hierarchy = this.methodFamily(method);
         if(this.shouldSkipHierarchy(graph, hierarchy))
             return;
 
-        var returnType = method.returnType();
-        var newDesc = "([Ljava/lang/Object;)" + returnType.getDescriptor();
-
-        if(this.hasDuplicateSignature(hierarchy, method.name(), newDesc))
+        if(hierarchy.stream().anyMatch(methods::containsKey))
             return;
+
+        for(var member : hierarchy) {
+            var newDesc = "([Ljava/lang/Object;)" + member.returnType().getDescriptor();
+            if(this.hasDuplicateSignature(hierarchy, member.name(), newDesc))
+                return;
+        }
 
         for(var member : hierarchy) {
             if(member.isLibrary())
@@ -144,22 +146,35 @@ public class MethodParameterObfuscationTransformer extends Transformer {
                 continue;
 
             methods.put(member, member.desc());
-            member.core().desc = newDesc;
+            member.core().desc = "([Ljava/lang/Object;)" + member.returnType().getDescriptor();
             member.core().signature = null;
         }
     }
 
-    private Set<JMethod> populateHierarchy(JMethod method) {
-        var hierarchy = new LinkedHashSet<JMethod>();
-        hierarchy.add(method);
-        hierarchy.addAll(method.tree());
-        return hierarchy;
+    private Set<JMethod> methodFamily(JMethod method) {
+        var family = new LinkedHashSet<JMethod>();
+        family.add(method);
+        family.addAll(method.tree());
+
+        var classes = new LinkedHashSet<JClass>();
+        for(var member : family) {
+            classes.add(member.owner());
+            classes.addAll(member.owner().tree());
+        }
+
+        for(var clazz : classes)
+            for(var candidate : clazz.methods())
+                if(method.name().equals(candidate.name()) &&
+                        Arrays.equals(Type.getArgumentTypes(method.desc()), Type.getArgumentTypes(candidate.desc())))
+                    family.add(candidate);
+
+        return family;
     }
 
     private boolean shouldSkipHierarchy(ReferenceGraph graph, Set<JMethod> hierarchy) {
         for(var member : hierarchy) {
             if(member.isLibrary())
-                continue;
+                return true;
 
             if(this.cantEditMethod(member.owner(), member))
                 return true;
