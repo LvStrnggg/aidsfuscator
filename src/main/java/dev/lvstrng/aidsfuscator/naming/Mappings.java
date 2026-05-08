@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Mappings {
-    CLASS, FIELD, METHOD;
+    CLASS, FIELD, METHOD, RESOURCE;
 
     private final Map<String, Mapping> mappings;
 

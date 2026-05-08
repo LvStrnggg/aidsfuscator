@@ -3,9 +3,11 @@ package dev.lvstrng.aidsfuscator.context.resource;
 import dev.lvstrng.aidsfuscator.context.Context;
 import dev.lvstrng.aidsfuscator.context.resource.handled.FabricModJsonHandler;
 import dev.lvstrng.aidsfuscator.context.resource.handled.ManifestHandler;
+import dev.lvstrng.aidsfuscator.tree.JResource;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.jar.JarOutputStream;
@@ -17,7 +19,7 @@ import java.util.zip.ZipEntry;
  */
 public class ResourceHandler {
     private final Context context;
-    private final Map<String, byte[]> resources = new HashMap<>();
+    private final List<JResource> resources = new ArrayList<>();
 
     private final Map<String, Supplier<HandledResource>> handledResources = Map.of(
             "MANIFEST.MF", ManifestHandler::new,
@@ -29,9 +31,11 @@ public class ResourceHandler {
     }
 
     public void handle(JarOutputStream jos) throws IOException {
-        for(var resource : resources.entrySet()) {
-            var name = resource.getKey();
-            var bytes = resource.getValue();
+        var resourcesList = new ArrayList<>(resources);
+        resourcesList.addAll(context.artificialResources().values());
+        for(var resource : resourcesList) {
+            var name = resource.getName();
+            var bytes = resource.getData();
 
             var handled = false;
             for(var k : handledResources.keySet()) {
@@ -52,11 +56,11 @@ public class ResourceHandler {
         }
     }
 
-    public void add(String name, byte[] bytes) {
-        resources.put(name, bytes);
+    public void add(JResource resource) {
+        resources.add(resource);
     }
 
-    public Map<String, byte[]> resources() {
+    public List<JResource> resources() {
         return resources;
     }
 }

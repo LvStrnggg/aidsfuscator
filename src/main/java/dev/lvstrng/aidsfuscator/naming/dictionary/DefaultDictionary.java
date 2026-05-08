@@ -12,6 +12,7 @@ public class DefaultDictionary implements IDictionary {
     private final Context context;
     private final String dictionary;
     private int classCounter = 0;
+    private int resourceCounter = 0;
 
     public DefaultDictionary(Context context, String dictionary) {
         this.context = context;
@@ -53,6 +54,16 @@ public class DefaultDictionary implements IDictionary {
         return result;
     }
 
+    @Override public String newResourceName(String prefix) {
+        var result = "";
+
+        do {
+          result = prefix + newName(resourceCounter++);
+        } while (isResourceMapped(result));
+
+        return result;
+    }
+
     @Override
     public String newClassName() {
         return newClassName("");
@@ -66,6 +77,11 @@ public class DefaultDictionary implements IDictionary {
     @Override
     public String newFieldName(JClass owner, String desc) {
         return newFieldName("", owner, desc);
+    }
+
+    @Override
+    public String newResourceName() {
+        return newResourceName("");
     }
 
     @Override
@@ -123,6 +139,10 @@ public class DefaultDictionary implements IDictionary {
         return owner.methods().stream().anyMatch(e -> e.simpleName().equals(simpleName));
     }
 
+    private boolean isResourceMapped(String name) {
+        return context.resourceMap().containsKey(name) || Mappings.RESOURCE.containsNew(name);
+    }
+
     @Override
     public void revertClass() {
         // do nothing
@@ -136,5 +156,10 @@ public class DefaultDictionary implements IDictionary {
     @Override
     public void revertField() {
         // do nothing
+    }
+
+    @Override
+    public void revertResource() {
+        // eat five star, do nothing
     }
 }

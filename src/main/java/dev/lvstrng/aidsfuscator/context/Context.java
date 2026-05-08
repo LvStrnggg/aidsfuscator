@@ -16,7 +16,7 @@ import dev.lvstrng.aidsfuscator.naming.dictionary.IDictionary;
 import dev.lvstrng.aidsfuscator.property.GlobalPropertyContainer;
 import dev.lvstrng.aidsfuscator.reference.ReferenceManager;
 import dev.lvstrng.aidsfuscator.transform.Transformer;
-import dev.lvstrng.aidsfuscator.tree.JClass;
+import dev.lvstrng.aidsfuscator.tree.*;
 import dev.lvstrng.aidsfuscator.utils.ClassUtils;
 import dev.lvstrng.aidsfuscator.utils.Utils;
 import org.objectweb.asm.ClassWriter;
@@ -39,6 +39,7 @@ import java.util.zip.ZipFile;
 public class Context {
     private String input, output, libPath, javaPath;
     private final Map<String, JClass> classes, artificials, libraries, excluded;
+    private final Map<String, JResource> resources, artificialResources;
     private int writerFlags;
     private int version;
     private boolean computeFrames;
@@ -63,6 +64,8 @@ public class Context {
         this.artificials = new HashMap<>();
         this.libraries = new HashMap<>();
         this.excluded = new HashMap<>();
+        this.resources = new HashMap<>();
+        this.artificialResources = new HashMap<>();
         this.transformers = new ArrayList<>();
 
         this.resourceHandler    = new ResourceHandler(this);
@@ -131,7 +134,9 @@ public class Context {
                 }
 
                 // add resource
-                resourceHandler.add(name, bytes);
+                var resource = new JResource(name, bytes, this);
+                resources.put(name, resource);
+                resourceHandler.add(resource);
             }
         } catch (IOException _) {}
     }
@@ -265,9 +270,29 @@ public class Context {
         return libPath;
     }
 
-    // -----------------
-    // ---- CLASSES ----
-    // -----------------
+    // -------------------
+    // ---- RESOURCES ----
+    // -------------------
+
+    public JResource createResource() {
+        return new JResource(dictionary.newResourceName(), this);
+    }
+
+    public Map<String, JResource> resourceMap() {
+        return resources;
+    }
+
+    public Map<String, JResource> artificialResources() {
+        return artificialResources;
+    }
+
+    public void addArtificial(JResource resource) {
+        artificialResources.put(resource.getName(), resource);
+    }
+
+    // -------------------
+    // ---- CLASSES ------
+    // -------------------
 
     public JClass createClass(String superName, int access) {
         var _node = new ClassNode();
