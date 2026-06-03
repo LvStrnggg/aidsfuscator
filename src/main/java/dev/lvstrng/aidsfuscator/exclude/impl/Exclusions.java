@@ -23,7 +23,7 @@ public enum Exclusions {
 
     METHOD_SALTING("methodSalting", true, false, true),
     CLASS_SALTING("classSalting", true, false, true),
-    PARAMETER_OBFUSCATE("methodParameterObfuscate", true, false, true),
+    PARAMETER_OBFUSCATE("parameterShuffle", true, false, true),
 
     REFERENCE_OBFUSCATE("referenceObfuscate", true, false, true),
     FIX_CONSTANTS("fixConstants", true, true, false),
