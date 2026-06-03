@@ -13,6 +13,7 @@ import dev.lvstrng.aidsfuscator.transform.impl.rename.FieldRenameTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.rename.MethodRenameTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.salt.ClassSaltTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.salt.MethodSaltTransformer;
+import dev.lvstrng.aidsfuscator.transform.impl.shuffle.MethodParameterShuffleTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LineNumberTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LocalVariableNameTransformer;
 
@@ -37,6 +38,7 @@ public final class TransformerOrder {
             new LineNumberTransformer(),
             new MethodSaltTransformer(),
             new ClassSaltTransformer(),
+            new MethodParameterShuffleTransformer(),
 
             new ConstantsFixTransformer(),
             new IntegerEncryptTransformer(),
