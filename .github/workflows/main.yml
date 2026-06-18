@@ -1,0 +1,95 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write   # REQUIRED to create GitHub releases
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:  
+      # -----------------------------  
+      # Checkout  
+      # -----------------------------  
+      - name: Checkout repository  
+        uses: actions/checkout@v4  
+        with:  
+          fetch-depth: 0   # REQUIRED for git tags & changelog  
+
+      # -----------------------------  
+      # Java  
+      # -----------------------------  
+      - name: Setup JDK 21  
+        uses: actions/setup-java@v4  
+        with:  
+          java-version: '21'  
+          distribution: 'temurin'  
+          cache: maven  
+
+      # -----------------------------  
+      # Build with Maven  
+      # -----------------------------  
+      - name: Build with Maven  
+        run: mvn -B clean package --file pom.xml  
+
+      # -----------------------------  
+      # Get commit hash and rename JAR  
+      # -----------------------------  
+      - name: Get commit hash and rename JAR  
+        id: build_info  
+        run: |  
+          # Get short commit hash  
+          SHORT_HASH=$(git rev-parse --short HEAD)  
+          echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT  
+          
+          # Rename the JAR to aidsfuscator-{hash}.jar  
+          ORIGINAL_JAR="target/jnt-1.0-SNAPSHOT-jar-with-dependencies.jar"  
+          NEW_JAR="target/aidsfuscator-${SHORT_HASH}.jar"  
+          
+          if [ ! -f "$ORIGINAL_JAR" ]; then  
+            echo "❌ ERROR: Original JAR not found at $ORIGINAL_JAR"  
+            ls -la target/  
+            exit 1  
+          fi  
+          
+          mv "$ORIGINAL_JAR" "$NEW_JAR"  
+          echo "JAR_FILE=$NEW_JAR" >> "$GITHUB_ENV"  
+          echo "JAR_NAME=aidsfuscator-${SHORT_HASH}.jar" >> "$GITHUB_ENV"  
+          echo "✅ Renamed to: aidsfuscator-${SHORT_HASH}.jar"  
+
+      # -----------------------------  
+      # Generate changelog (since last tag)  
+      # -----------------------------  
+      - name: Generate changelog  
+        run: |  
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")  
+          echo "## Changes" > CHANGELOG.md  
+
+          if [ -z "$LAST_TAG" ]; then  
+            echo "_Initial release_" >> CHANGELOG.md  
+            echo "" >> CHANGELOG.md  
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md  
+          else  
+            echo "_Changes since $LAST_TAG_" >> CHANGELOG.md  
+            echo "" >> CHANGELOG.md  
+            git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md  
+          fi  
+
+      # -----------------------------  
+      # GitHub Release  
+      # -----------------------------  
+      - name: Upload to GitHub Release  
+        uses: softprops/action-gh-release@v2  
+        with:  
+          files: ${{ env.JAR_FILE }}  
+          tag_name: ${{ steps.build_info.outputs.short_hash }}  
+          name: Aidsfuscator (commit ${{ steps.build_info.outputs.short_hash }})  
+          body_path: CHANGELOG.md  
+          overwrite_files: true  
+        env:  
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
