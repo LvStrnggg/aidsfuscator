@@ -20,8 +20,9 @@ public class JField implements IAccessFlags, IHierarchical<JField>, IAnnotatable
     private FieldNode core;
     private final PropertyContainer properties;
 
-    private final String originalName, originalDesc;
     private boolean library;
+    private final String originalName, originalDesc;
+    private String mappedName;
 
     private Set<JField> parents, children;
 
@@ -30,6 +31,7 @@ public class JField implements IAccessFlags, IHierarchical<JField>, IAnnotatable
         this.library = false;
         this.originalName = core.name;
         this.originalDesc = core.desc;
+
         this.setCore(core);
     }
 
@@ -55,6 +57,7 @@ public class JField implements IAccessFlags, IHierarchical<JField>, IAnnotatable
 
     public void setCore(FieldNode core) {
         this.core = core;
+        setMappedName(core.name);
 
         this.parents = new HashSet<>();
         this.children = new HashSet<>();
@@ -110,6 +113,14 @@ public class JField implements IAccessFlags, IHierarchical<JField>, IAnnotatable
 
     public void setValue(Object value) {
         core.value = value;
+    }
+
+    public String mappedName() {
+        return mappedName;
+    }
+
+    public void setMappedName(String mappedName) {
+        this.mappedName = mappedName;
     }
 
     public String simpleName() {

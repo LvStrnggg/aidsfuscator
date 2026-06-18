@@ -45,5 +45,6 @@ public class ClassRenameTransformer extends Transformer {
         }
 
         remap(context);
+        Mappings.CLASS.clearTemp();
     }
 }

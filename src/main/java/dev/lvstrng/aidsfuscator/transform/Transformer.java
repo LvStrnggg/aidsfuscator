@@ -18,6 +18,7 @@ public abstract class Transformer implements Opcodes {
     protected final SecureRandom random;
     private final List<Setting<?>> settings;
     private int changes;
+    private boolean experimental;
 
     public Transformer(String name, String key) {
         this.name = name;
@@ -28,8 +29,12 @@ public abstract class Transformer implements Opcodes {
 
     public abstract void transform(Context context);
 
+    public void setExperimental() {
+        this.experimental = true;
+    }
+
     public String name() {
-        return name;
+        return name + (experimental ? " (EXPERIMENTAL)" : "");
     }
 
     public String key() {

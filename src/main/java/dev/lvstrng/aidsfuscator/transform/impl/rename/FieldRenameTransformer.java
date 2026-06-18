@@ -20,6 +20,7 @@ import java.util.Set;
 
 public class FieldRenameTransformer extends Transformer {
     private final Setting<Boolean>  preserveRecordNames = setting("preserveRecordNames", true);
+    private final Setting<Boolean>  keepSerializableNames = setting("keepSerializableNames", true);
     private final Setting<String>   prefix = setting("prefix", "");
     private final Setting<Boolean>  shuffle = setting("shuffle", false);
 
@@ -36,6 +37,7 @@ public class FieldRenameTransformer extends Transformer {
         remap(context);
         if(!preserveRecordNames.value())
             transformRecordMethods(context);
+        Mappings.FIELD.clearTemp();
     }
 
     /**
@@ -108,10 +110,13 @@ public class FieldRenameTransformer extends Transformer {
 
             var name = findOrGenerateName(context, clazz, impactedClasses, field);
             for(var member : impactedClasses) {
-                var oldId = MemberUtils.fullField(member, field);
-                if(Mappings.FIELD.containsOld(oldId))
-                    continue;
+                var opt = member.findField(field.name(), field.desc());
+                if(opt.isPresent()) {
+                    var f = opt.get();
+                    f.setMappedName(name);
+                }
 
+                var oldId = MemberUtils.fullField(member, field);
                 var newId = MemberUtils.fullField(member.name(), name, field.desc());
                 Mappings.FIELD.register(oldId, new Mapping(newId, name));
 
@@ -144,6 +149,9 @@ public class FieldRenameTransformer extends Transformer {
                 return true;
 
             if(Exclusions.RENAME_FIELD.excluded(member, field))
+                return true;
+
+            if(keepSerializableNames.value() && member.tree().stream().anyMatch(e -> e.name().equals("java/io/Serializable")))
                 return true;
         }
 

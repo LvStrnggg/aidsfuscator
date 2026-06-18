@@ -4,6 +4,7 @@ import dev.lvstrng.aidsfuscator.analysis.ref.nodes.MethodReference;
 import dev.lvstrng.aidsfuscator.analysis.ref.ReferenceGraph;
 import dev.lvstrng.aidsfuscator.context.Context;
 import dev.lvstrng.aidsfuscator.exclude.impl.Exclusions;
+import dev.lvstrng.aidsfuscator.log.Logger;
 import dev.lvstrng.aidsfuscator.property.Property;
 import dev.lvstrng.aidsfuscator.transform.Transformer;
 import dev.lvstrng.aidsfuscator.tree.impl.JClass;
@@ -33,11 +34,11 @@ public class MethodParameterObfuscationTransformer extends Transformer {
 
         for(var method : obfuscatedMethods) {
             var args = method.args();
-            if(method.isAbstract() || method.isNative() || method.insns().size() == 0) {
-                method.core().desc = "([Ljava/lang/Object;)" + method.returnType().getDescriptor();
-                continue;
+            if(!method.isAbstract() && !method.isNative()) {
+                unpackArgs(context, method, method.args());
             }
-            unpackArgs(context, method, args);
+
+            method.core().desc = "([Ljava/lang/Object;)" + method.returnType();
 
             var refs = graph.refs(method);
             for(var ref : refs) {
@@ -70,6 +71,92 @@ public class MethodParameterObfuscationTransformer extends Transformer {
 
             markChange();
         }
+        //obfuscatedMethods.forEach(e -> Logger.success("%s -> %s.%s%s", e.fullName(), e.owner().name(), e.name(), "([Ljava/lang/Object;)" + e.returnType()));
+    }
+
+    private void registerClass(Context context, ReferenceGraph graph, JClass clazz, Set<JMethod> obfuscatedMethods) {
+        var toCheck = new HashSet<JMethod>();
+
+        for(var method : clazz.methods()) {
+            var impactedClasses = impactedClasses(context, clazz, method);
+
+            if(skipMethodAndTree(graph, method, impactedClasses)) {
+                toCheck.addAll(method.tree());
+                toCheck.add(method);
+            }
+        }
+
+        for(var method : clazz.methods()) {
+            if(toCheck.contains(method))
+                continue;
+
+            var duplicateOpt = toCheck.stream()
+                    .filter(e -> e != method)                    // filter this method
+                    .filter(e -> e.name().equals(method.name())) // has same name
+                    .filter(e -> e.desc().equals("([Ljava/lang/Object;)" + method.returnType())) // has desired descriptor, causes collision if remapped
+                    .findAny();
+
+            if(duplicateOpt.isPresent()) // found duplicate, continue
+                continue;
+
+            duplicateOpt = obfuscatedMethods.stream()
+                    .filter(e -> e != method)
+                    .filter(e -> e.owner().equals(method.owner()) || e.owner().tree().contains(method.owner()))
+                    .filter(e -> e.name().equals(method.name()))
+                    .filter(e -> e.returnType().equals(e.returnType()))
+                    .findAny();
+
+            if(duplicateOpt.isPresent()) // found duplicate, continue
+                continue;
+
+            var impacted = impactedClasses(context, clazz, method);
+            method.tree().forEach(e -> e.removeAccessFlags(ACC_VARARGS));
+            method.removeAccessFlags(ACC_VARARGS);
+
+            obfuscatedMethods.addAll(method.tree());
+            obfuscatedMethods.add(method);
+        }
+    }
+
+    private Set<JClass> impactedClasses(Context context, JClass clazz, JMethod method) {
+        var classes = new HashSet<>(clazz.children());
+        classes.add(clazz);
+
+        for(var parent : clazz.tree()) {
+            if(!parent.hasMethodInTree(context, method))
+                continue;
+
+            classes.add(parent);
+            classes.addAll(parent.children());
+        }
+
+        return classes;
+    }
+
+    private boolean skipMethodAndTree(ReferenceGraph graph, JMethod method, Set<JClass> impactedClasses) {
+        if(method.owner().isLibMethod(method))
+            return true;
+
+        for(var member : impactedClasses) {
+            var opt = member.findMethod(method.name(), method.desc());
+            if(opt.isPresent())
+                method = opt.get();
+
+            if(Exclusions.PARAMETER_OBFUSCATE.excluded(member))
+                return true;
+
+            if(Exclusions.PARAMETER_OBFUSCATE.excluded(member, method))
+                return true;
+
+            if(cantEditMethod(member, method))
+                return true;
+
+            var refs = graph.refs(method);
+            if (refs.stream().anyMatch(MethodReference::cantEdit))
+                return true;
+        }
+
+        return false;
     }
 
     private void unpackArgs(Context context, JMethod method, Type[] args) {
@@ -111,92 +198,5 @@ public class MethodParameterObfuscationTransformer extends Transformer {
 
         if(method.hasSalt())
             method.salt().updateVar(method.salt().local() + 1);
-        method.core().desc = "([Ljava/lang/Object;)" + method.returnType().getDescriptor();
-    }
-
-    private void registerClass(Context context, ReferenceGraph graph, JClass clazz, Set<JMethod> obfuscatedMethods) {
-        var toCheck = new HashSet<JMethod>();
-
-        // ---- SET DANGER METHODS ----
-        for(var method : clazz.methods()) {
-            var impactedClasses = impactedClasses(context, clazz, method);
-            if(!skipMethodAndTree(graph, method, impactedClasses))
-                continue;
-
-            toCheck.add(method);
-            toCheck.addAll(method.tree());
-        }
-
-        // ---- REGISTER ----
-        for(var method : clazz.methods()) {
-            if(toCheck.contains(method))
-                continue;
-
-            var duplicateOpt = toCheck.stream()
-                    .filter(e -> e != method)                    // filter this method
-                    .filter(e -> e.name().equals(method.name())) // has same name
-                    .filter(e -> e.desc().equals("([Ljava/lang/Object;)" + method.returnType().getDescriptor())) // has desired descriptor, causes collision if remapped
-                    .findAny();
-
-            if(duplicateOpt.isPresent()) // found duplicate, continue
-                continue;
-
-            registerMethodTree(method, obfuscatedMethods);
-        }
-    }
-
-    private void registerMethodTree(JMethod method, Set<JMethod> obfuscatedMethods) {
-        for(var member : method.tree()) {
-            if(!obfuscatedMethods.add(member))
-                continue;
-
-            member.removeAccessFlags(ACC_VARARGS);
-        }
-
-        if(!obfuscatedMethods.add(method))
-            return;
-
-        method.removeAccessFlags(ACC_VARARGS);
-    }
-
-    private boolean skipMethodAndTree(ReferenceGraph graph, JMethod method, Set<JClass> impactedClasses) {
-        for(var member : impactedClasses) {
-            var opt = member.findMethod(method.name(), method.desc());
-            if(opt.isPresent())
-                method = opt.get();
-
-            if(member.isLibMethod(method))
-                return true;
-
-            if(Exclusions.PARAMETER_OBFUSCATE.excluded(member))
-                return true;
-
-            if(Exclusions.PARAMETER_OBFUSCATE.excluded(member, method))
-                return true;
-
-            if(cantEditMethod(member, method))
-                return true;
-
-            var refs = graph.refs(method);
-            if (refs.stream().anyMatch(MethodReference::cantEdit))
-                return true;
-        }
-
-        return false;
-    }
-
-    private Set<JClass> impactedClasses(Context context, JClass clazz, JMethod method) {
-        var classes = new HashSet<>(clazz.children());
-        classes.add(clazz);
-
-        for(var parent : clazz.tree()) {
-            if(!parent.hasMethodInTree(context, method))
-                continue;
-
-            classes.add(parent);
-            classes.addAll(parent.children());
-        }
-
-        return classes;
     }
 }

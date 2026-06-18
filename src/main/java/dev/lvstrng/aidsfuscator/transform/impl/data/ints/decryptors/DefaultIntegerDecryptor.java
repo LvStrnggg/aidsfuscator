@@ -2,6 +2,11 @@ package dev.lvstrng.aidsfuscator.transform.impl.data.ints.decryptors;
 
 import dev.lvstrng.aidsfuscator.analysis.interpreter.SimpleFrame;
 import dev.lvstrng.aidsfuscator.context.Context;
+import dev.lvstrng.aidsfuscator.polymorph.IntMask;
+import dev.lvstrng.aidsfuscator.polymorph.IntPolymorphStack;
+import dev.lvstrng.aidsfuscator.polymorph.impl.AddMask;
+import dev.lvstrng.aidsfuscator.polymorph.impl.SubMask;
+import dev.lvstrng.aidsfuscator.polymorph.impl.XorMask;
 import dev.lvstrng.aidsfuscator.property.Property;
 import dev.lvstrng.aidsfuscator.transform.impl.data.ints.IIntegerDecryptor;
 import dev.lvstrng.aidsfuscator.tree.impl.JClass;
@@ -16,13 +21,27 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class DefaultIntegerDecryptor implements IIntegerDecryptor {
     private String name;
     private final int idxXor;
+    private final IntPolymorphStack stack;
 
     public DefaultIntegerDecryptor() {
         this.idxXor = random.nextInt();
+        this.stack = new IntPolymorphStack();
+
+        int masks = random.nextInt(5, 10) + 1;
+        List<Supplier<IntMask<?>>> types = List.of(
+                () -> new XorMask().ofRandomValue(Character.MAX_VALUE),
+                () -> new SubMask().ofRandomValue(Character.MAX_VALUE),
+                () -> new AddMask().ofRandomValue(Character.MAX_VALUE)
+        );
+
+        for(int i = 0; i < masks; i++) {
+            stack.push(types.get(random.nextInt(types.size())).get());
+        }
     }
 
     @Override
@@ -35,6 +54,7 @@ public class DefaultIntegerDecryptor implements IIntegerDecryptor {
         // ---- LOCALS ----
         var idxVal = method.allocVar(Type.INT_TYPE);
         var key = method.allocVar(Type.INT_TYPE);
+        var value = method.allocVar(Type.INT_TYPE);
 
         new InsnBuilder(method.insns())
                 .label(new LabelNode())
@@ -49,6 +69,9 @@ public class DefaultIntegerDecryptor implements IIntegerDecryptor {
                 .ixor()
                 ._var(ILOAD, idxVal)
                 .ixor()
+                ._var(ISTORE, value)
+                ._var(ILOAD, value)
+                .add(stack.dumpWithList(() -> new InsnBuilder()._var(ISTORE, value)._var(ILOAD, value).result()))
                 ._ireturn()
         ;
     }
@@ -68,7 +91,7 @@ public class DefaultIntegerDecryptor implements IIntegerDecryptor {
         // ---- PREPARE KEYS -----
         var key = random.nextInt();
         int idxValue = numbers.size() ^ idxXor;
-        num = ASMUtils.getInt(callSite) ^ key ^ idxValue;
+        num = stack.applyInverse(ASMUtils.getInt(callSite)) ^ key ^ idxValue;
         numbers.add(num);
 
         // ---- INSTRUCTIONS ----

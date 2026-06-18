@@ -47,16 +47,18 @@ public class ControlFlowGraph {
         if(frames == null)
             return this;
 
+        int lineNumber = -1;
         Block currentBlock = null;
         for(var insn : method.insns()) {
             if(insn instanceof LabelNode lbl) {
                 var nextBlock = labelBlocks.get(lbl);
 
-                if(currentBlock != null)
+                if (currentBlock != null)
                     handleCurrentBlock(currentBlock, lbl, nextBlock);
 
                 currentBlock = nextBlock;
-            }
+            } else if(insn instanceof LineNumberNode ln)
+                lineNumber = ln.line;
 
             if(currentBlock == null)
                 continue;
@@ -68,6 +70,7 @@ public class ControlFlowGraph {
                 currentBlock.setEnd(frame);
             }
 
+            currentBlock.setLineNumber(lineNumber);
             currentBlock.frames().put(insn, frame);
             currentBlock.setLastInsn(insn);
             currentBlock.insns().add(insn);

@@ -24,6 +24,7 @@ import dev.lvstrng.aidsfuscator.exclude.impl.Exclusions;
 public class AnnotationExclusionPreset implements IExclusionPreset {
     @Override
     public void load() {
+        Exclusions.GLOBAL.addClass("dev/lvstrng/aidsfuscator/api/*");
         Exclusions.GLOBAL.addAnnotation(internal(ExcludeGlobal.class));
 
         Exclusions.RENAME_CLASS.addAnnotation(internal(ExcludeClassRename.class));

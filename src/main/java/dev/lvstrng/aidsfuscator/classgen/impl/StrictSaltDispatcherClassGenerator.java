@@ -15,7 +15,11 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SaltDispatcherClassGenerator implements IClassGen, Opcodes {
+/**
+ * A class generator that generates a salt dispatcher, which, with pairs, strictly specifies `InitializerClass -> ClassGettingInitialized`.
+ * @author lvstrng
+ */
+public class StrictSaltDispatcherClassGenerator implements IClassGen, Opcodes {
     private static final int PRIVATE_STATIC = ACC_PRIVATE | ACC_STATIC;
     private static final int PUBLIC_STATIC = ACC_PUBLIC | ACC_STATIC;
     private static final String MAP_TYPE = "Ljava/util/Map;";

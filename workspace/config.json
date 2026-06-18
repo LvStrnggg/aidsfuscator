@@ -1,8 +1,8 @@
 {
-  "in": "clumps.jar",
+  "in": "snake.jar",
   "out": "out.jar",
-  "libs": "mclibs/",
-  "dictionary": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "libs": "libs/",
+  "dictionary": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_",
   "computeFrames": true,
   "watermark": "",
   "aggressiveOverload": true,
@@ -12,7 +12,7 @@
   ],
   "transformers": {
     "trim": {
-      "enabled": true,
+      "enabled": false,
       "classes": true,
       "fields": true,
       "methods": true
@@ -20,6 +20,7 @@
     "renameFields": {
       "enabled": true,
       "preserveRecordNames": true,
+      "keepSerializableNames": true,
       "prefix": "",
       "shuffle": true
     },
@@ -31,6 +32,8 @@
     "renameClasses": {
       "enabled": true,
       "prefix": "",
+      "mixinPrefix": "b.",
+      "renameSourceFile": true,
       "randomize": true
     },
     "localNames": {
@@ -70,10 +73,10 @@
       "enabled": true
     },
     "cleanDeadCode": {
-      "enabled": true
+      "enabled": false
     },
     "referenceObfuscate": {
-      "enabled": true
+      "enabled": false
     }
   }
 }

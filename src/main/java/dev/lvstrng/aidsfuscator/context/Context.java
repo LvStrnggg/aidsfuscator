@@ -1,7 +1,7 @@
 package dev.lvstrng.aidsfuscator.context;
 
 import dev.lvstrng.aidsfuscator.analysis.ref.ReferenceGraph;
-import dev.lvstrng.aidsfuscator.classgen.impl.SaltDispatcherClassGenerator;
+import dev.lvstrng.aidsfuscator.classgen.impl.StrictSaltDispatcherClassGenerator;
 import dev.lvstrng.aidsfuscator.context.exception.MissingMemberException;
 import dev.lvstrng.aidsfuscator.context.exception.MissingWorkspaceItemException;
 import dev.lvstrng.aidsfuscator.context.hierarchy.IHierarchy;
@@ -50,7 +50,7 @@ public class Context {
     private final ReferenceGraph referenceGraph;
     private final GlobalPropertyContainer propertyContainer;
     private final ReferenceManager referenceManager;
-    private final SaltDispatcherClassGenerator saltDispatcherGen;
+    private final StrictSaltDispatcherClassGenerator saltDispatcherGen;
     private final ResourceHandler resourceHandler;
     private final ClassInitOrderHandler initOrder;
 
@@ -81,7 +81,7 @@ public class Context {
         this.propertyContainer  = new GlobalPropertyContainer();
         this.initOrder          = new ClassInitOrderHandler(this);
         this.referenceManager   = new ReferenceManager(this);
-        this.saltDispatcherGen  = new SaltDispatcherClassGenerator();
+        this.saltDispatcherGen  = new StrictSaltDispatcherClassGenerator();
         this.initOrderLoader    = new ClassInitOrderLoader(this, "");
 
         this.writerFlags = ClassWriter.COMPUTE_MAXS;
@@ -141,7 +141,7 @@ public class Context {
         return referenceManager;
     }
 
-    public SaltDispatcherClassGenerator saltDispatcher() {
+    public StrictSaltDispatcherClassGenerator saltDispatcher() {
         return saltDispatcherGen;
     }
 

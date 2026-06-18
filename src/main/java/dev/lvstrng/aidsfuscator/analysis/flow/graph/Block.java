@@ -25,6 +25,7 @@ public class Block {
     private final List<AbstractInsnNode> insns;
     private final Map<AbstractInsnNode, SimpleFrame> frames;
 
+    private int lineNumber;
     private Block defaultBlock;
     private final List<Block> predecessors, successors;
     private final List<TryCatchBlockNode> traps, trapEnds, trapHandlers;
@@ -61,6 +62,14 @@ public class Block {
                 || insn.getOpcode() == Opcodes.LOOKUPSWITCH
                 || insn.getOpcode() == Opcodes.TABLESWITCH
                 || ASMUtils.isReturn(insn) || insn.getOpcode() == Opcodes.ATHROW;
+    }
+
+    public int lineNumber() {
+        return lineNumber;
+    }
+
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
     }
 
     public void setExpectsValue() {

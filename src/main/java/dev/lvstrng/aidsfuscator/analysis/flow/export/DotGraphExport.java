@@ -37,6 +37,7 @@ public class DotGraphExport {
             }
 
             // header end, display insns
+            sb.append("Line ").append(block.lineNumber()).append("\\n");
             sb.append("-------------------------\\n");
             for(var insn : block.insns()) {
                 if(insn.getOpcode() == -1)

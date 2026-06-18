@@ -35,6 +35,7 @@ public class JMethod implements IAccessFlags, ISaltable<MethodSalt>, IHierarchic
 
     private boolean library;
     private final String originalName, originalDesc;
+    private String mappedName;
 
     private Set<JMethod> parents, children;
     private AbstractInsnNode safeInsn;
@@ -180,6 +181,7 @@ public class JMethod implements IAccessFlags, ISaltable<MethodSalt>, IHierarchic
 
     public void setCore(MethodNode core) {
         this.core = core;
+        setMappedName(core.name);
 
         this.parents = new HashSet<>();
         this.children = new HashSet<>();
@@ -279,6 +281,14 @@ public class JMethod implements IAccessFlags, ISaltable<MethodSalt>, IHierarchic
             Logger.error("Error analyzing frames in (%s): %s", fullOriginalName(), e.getLocalizedMessage());
             return null;
         }
+    }
+
+    public String mappedName() {
+        return mappedName;
+    }
+
+    public void setMappedName(String mappedName) {
+        this.mappedName = mappedName;
     }
 
     public String simpleName() {

@@ -1,6 +1,7 @@
 package dev.test;
 
 import dev.lvstrng.aidsfuscator.context.Context;
+import dev.lvstrng.aidsfuscator.exclude.impl.Exclusions;
 import dev.lvstrng.aidsfuscator.transform.impl.data.ConstantsFixTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.data.ints.IntegerEncryptTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.data.strings.StringEncryptTransformer;
@@ -16,23 +17,28 @@ import dev.lvstrng.aidsfuscator.transform.impl.salt.ClassSaltTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.salt.MethodSaltTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LineNumberTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LocalVariableNameTransformer;
+import dev.test.transform.InjectorTransformer;
+import dev.test.transform.MethodInlineTransformer;
+import dev.test.transform.MethodParameterObfuscationTransformer;
 import dev.test.transform.TestTransformer;
+import org.objectweb.asm.Opcodes;
 
 public class TestMain {
     public static void main(String[] args) {
         var context = Context.newInstance()
                 .computeFrames()
-                .in("out/artifacts/aidsfuscator_jar/aidsfuscator.jar")
+                .in("flappy.jar")
                 .libs("libs")
                 .out("out.jar")
                 .setAggressiveOverload(true);
 
         //context.referenceManager().addMethodCandidate("*");
-        //context.referenceManager().addFieldCandidate("*");
-        //context.referenceManager().addMethodCandidate("*");
+        context.referenceManager().addFieldCandidate("*");
+        context.referenceManager().addMethodCandidate("*");
 
+        Exclusions.GLOBAL.addClass("dev/lvstrng/aidsfuscator/api/*");
         context.run(
-                new TestTransformer(),
+                new InjectorTransformer(),
 
                 new FieldRenameTransformer(),
                 new MethodRenameTransformer(),
@@ -49,6 +55,7 @@ public class TestMain {
 
                 new ControlFlowFlatteningTransformer(),
                 new ControlFlowShufflingTransformer(),
+                new DeadCodeCleanTransformer(),
                 new ReferenceObfuscationTransformer()
         );
     }

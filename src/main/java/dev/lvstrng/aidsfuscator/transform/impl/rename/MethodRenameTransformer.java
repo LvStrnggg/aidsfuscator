@@ -10,10 +10,7 @@ import dev.lvstrng.aidsfuscator.tree.impl.JClass;
 import dev.lvstrng.aidsfuscator.tree.impl.JMethod;
 import dev.lvstrng.aidsfuscator.utils.MemberUtils;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class MethodRenameTransformer extends Transformer {
     private final Setting<String> prefix = setting("prefix", "");
@@ -30,6 +27,7 @@ public class MethodRenameTransformer extends Transformer {
         }
 
         remap(context);
+        Mappings.METHOD.clearTemp();
     }
 
     private void mapMethods(Context context, JClass clazz) {
@@ -47,10 +45,13 @@ public class MethodRenameTransformer extends Transformer {
 
             var name = findOrGenerateName(context, clazz, impactedClasses, method);
             for(var member : impactedClasses) {
-                var oldId = MemberUtils.fullMethod(member, method);
-                if(Mappings.METHOD.containsOld(oldId))
-                    continue;
+                var opt = member.findMethod(method.name(), method.desc());
+                if(opt.isPresent()) {
+                    var mth = opt.get();
+                    mth.setMappedName(name);
+                }
 
+                var oldId = MemberUtils.fullMethod(member, method);
                 var newId = MemberUtils.fullMethod(member.name(), name, method.desc());
                 Mappings.METHOD.register(oldId, new Mapping(newId, name));
 
@@ -108,6 +109,7 @@ public class MethodRenameTransformer extends Transformer {
                 continue;
 
             classes.add(parent);
+            classes.addAll(parent.children());
         }
 
         return classes;

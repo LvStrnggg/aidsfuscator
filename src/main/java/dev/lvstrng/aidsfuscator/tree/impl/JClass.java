@@ -51,6 +51,63 @@ public class JClass implements IAccessFlags, ISaltable<ClassSalt>, IHierarchical
         core.fields.forEach(this::add);
     }
 
+    /**
+     * Scans the class tree to see if theres a method with the specified name AND descriptor
+     * @param name name to check for
+     * @param desc descriptor to check for
+     */
+    public boolean isMethodMappedExact(String name, String desc) {
+        for(var member : tree()) {
+            if(member.methods().stream().anyMatch(e -> e.mappedName().equals(name) && e.desc().equals(desc)))
+                return true;
+        }
+
+        return methods().stream().anyMatch(e -> e.mappedName().equals(name) && e.desc().equals(desc));
+    }
+
+    /**
+     * Scans the class tree to see if theres a field with the specified name AND descriptor
+     * @param name name to check for
+     * @param desc descriptor to check for
+     */
+    public boolean isFieldMappedExact(String name, String desc) {
+        if(tree().stream().anyMatch(e -> e.name().equals("java/io/Serializable"))) // serializable check
+            return isFieldMapped(name);
+
+        for(var member : tree()) {
+            if(member.fields().stream().anyMatch(e -> e.mappedName().equals(name) && e.desc().equals(desc)))
+                return true;
+        }
+
+        return fields().stream().anyMatch(e -> e.mappedName().equals(name) && e.desc().equals(desc));
+    }
+
+    /**
+     * Scans the class tree to see if theres a method with the specified name (no descriptor checking)
+     * @param name name to check for
+     */
+    public boolean isMethodMapped(String name) {
+        for(var member : tree()) {
+            if(member.methods().stream().anyMatch(e -> e.mappedName().equals(name)))
+                return true;
+        }
+
+        return methods().stream().anyMatch(e -> e.mappedName().equals(name));
+    }
+
+    /**
+     * Scans the class tree to see if theres a field with the specified name (no descriptor checking)
+     * @param name name to check for
+     */
+    public boolean isFieldMapped(String name) {
+        for(var member : tree()) {
+            if(member.fields().stream().anyMatch(e -> e.mappedName().equals(name)))
+                return true;
+        }
+
+        return fields().stream().anyMatch(e -> e.mappedName().equals(name));
+    }
+
     public boolean isMixin() {
         return isAnnotatedBy("org/spongepowered/asm/mixin/Mixin");
     }
@@ -225,8 +282,9 @@ public class JClass implements IAccessFlags, ISaltable<ClassSalt>, IHierarchical
             context.hierarchy().build(this);
 
         for(var parent : parents) {
-            method = parent.findMethod(name, desc, e -> e.isVirtual() && !e.isPrivate() && !e.name().startsWith("<")).orElse(null);
+            method = parent.findMethod(name, desc, e -> !e.isNonHierarchical()).orElse(null);
             if(method == null) continue;
+
             return method;
         }
 
@@ -242,7 +300,7 @@ public class JClass implements IAccessFlags, ISaltable<ClassSalt>, IHierarchical
             context.hierarchy().build(this);
 
         for(var parent : parents) {
-            field = parent.findField(name, desc, e -> e.isVirtual() && !e.isPrivate()).orElse(null);
+            field = parent.findField(name, desc, e -> !e.isNonHierarchical()).orElse(null);
             if(field == null) continue;
 
             return field;

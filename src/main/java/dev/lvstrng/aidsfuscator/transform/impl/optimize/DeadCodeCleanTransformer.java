@@ -2,6 +2,7 @@ package dev.lvstrng.aidsfuscator.transform.impl.optimize;
 
 import dev.lvstrng.aidsfuscator.context.Context;
 import dev.lvstrng.aidsfuscator.transform.Transformer;
+import org.objectweb.asm.tree.LabelNode;
 
 public class DeadCodeCleanTransformer extends Transformer {
     public DeadCodeCleanTransformer() {
@@ -19,6 +20,9 @@ public class DeadCodeCleanTransformer extends Transformer {
                 for(var insn : method.insns()) {
                     var frame = frames.get(insn);
                     if(frame != null)
+                        continue;
+
+                    if(insn instanceof LabelNode)
                         continue;
 
                     method.insns().remove(insn);

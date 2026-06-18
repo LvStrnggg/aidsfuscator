@@ -21,8 +21,9 @@ public class ManifestHandler implements HandledResource {
             var attributes = manifest.getMainAttributes();
             var main = attributes.getValue("Main-Class");
             if(main != null){
-                var newName = Mappings.CLASS.retrieve(main.replace('.', '/')).value()
-                        .replace('/', '.');
+                var newName = Mappings.CLASS.retrieve(
+                        main.replace('.', '/')
+                ).value().replace('/', '.');
                 attributes.put(new Attributes.Name("Main-Class"), newName);
             }
             jos.putNextEntry(new ZipEntry(name));

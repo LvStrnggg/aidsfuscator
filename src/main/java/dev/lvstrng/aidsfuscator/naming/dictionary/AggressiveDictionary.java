@@ -36,7 +36,7 @@ public class AggressiveDictionary implements IDictionary {
 
         do {
             result = prefix + newName(counter++);
-        } while (isMethodMapped(owner, result, desc));
+        } while (owner.isMethodMappedExact(result, desc));
 
         return result;
     }
@@ -48,7 +48,7 @@ public class AggressiveDictionary implements IDictionary {
 
         do {
             result = prefix + newName(counter++);
-        } while (isFieldMapped(owner, result, desc));
+        } while (owner.isFieldMappedExact(result, desc));
 
         return result;
     }
@@ -83,40 +83,6 @@ public class AggressiveDictionary implements IDictionary {
 
     private boolean isClassMapped(String name) {
         return context.hasJarClass(name) || Mappings.CLASS.containsNew(name);
-    }
-
-    private boolean isFieldMapped(JClass owner, String name, String desc) {
-        for(var member : owner.tree()) {
-            var mappedName = "%s.%s %s".formatted(member.name(), name, desc);
-            if(Mappings.FIELD.getMappings().values().stream().anyMatch(e -> e.key().equals(mappedName)))
-                return true;
-
-            if(member.fields().stream().anyMatch(e -> e.name().equals(name)))
-                return true;
-        }
-
-        var mappedName = "%s.%s %s".formatted(owner.name(), name, desc);
-        if(Mappings.FIELD.getMappings().values().stream().anyMatch(e -> e.key().startsWith(mappedName)))
-            return true;
-
-        return owner.fields().stream().anyMatch(e -> e.name().equals(name));
-    }
-
-    private boolean isMethodMapped(JClass owner, String name, String desc) {
-        for(var member : owner.tree()) {
-            var mappedName = "%s.%s%s".formatted(member.name(), name, desc);
-            if(Mappings.METHOD.getMappings().values().stream().anyMatch(e -> e.key().equals(mappedName)))
-                return true;
-
-            if(member.methods().stream().anyMatch(e -> e.name().equals(name)))
-                return true;
-        }
-
-        var mappedName = "%s.%s%s".formatted(owner.name(), name, desc);
-        if(Mappings.METHOD.getMappings().values().stream().anyMatch(e -> e.key().startsWith(mappedName)))
-            return true;
-
-        return owner.methods().stream().anyMatch(e -> e.name().equals(name));
     }
 
     @Override
