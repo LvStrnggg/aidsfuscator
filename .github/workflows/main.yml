@@ -6,48 +6,34 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write   # REQUIRED to create GitHub releases
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-24.04
 
     steps:  
-      # -----------------------------  
-      # Checkout  
-      # -----------------------------  
       - name: Checkout repository  
         uses: actions/checkout@v4  
         with:  
-          fetch-depth: 0   # REQUIRED for git tags & changelog  
+          fetch-depth: 0
 
-      # -----------------------------  
-      # Java  
-      # -----------------------------  
-      - name: Setup JDK 21  
+      - name: Setup JDK 25  
         uses: actions/setup-java@v4  
         with:  
-          java-version: '21'  
+          java-version: '25'  
           distribution: 'temurin'  
-          cache: maven  
+          cache: maven
 
-      # -----------------------------  
-      # Build with Maven  
-      # -----------------------------  
       - name: Build with Maven  
-        run: mvn -B clean package --file pom.xml  
+        run: mvn -B clean package --file pom.xml
 
-      # -----------------------------  
-      # Get commit hash and rename JAR  
-      # -----------------------------  
       - name: Get commit hash and rename JAR  
         id: build_info  
         run: |  
-          # Get short commit hash  
           SHORT_HASH=$(git rev-parse --short HEAD)  
           echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT  
           
-          # Rename the JAR to aidsfuscator-{hash}.jar  
           ORIGINAL_JAR="target/jnt-1.0-SNAPSHOT-jar-with-dependencies.jar"  
           NEW_JAR="target/aidsfuscator-${SHORT_HASH}.jar"  
           
@@ -60,11 +46,8 @@ jobs:
           mv "$ORIGINAL_JAR" "$NEW_JAR"  
           echo "JAR_FILE=$NEW_JAR" >> "$GITHUB_ENV"  
           echo "JAR_NAME=aidsfuscator-${SHORT_HASH}.jar" >> "$GITHUB_ENV"  
-          echo "✅ Renamed to: aidsfuscator-${SHORT_HASH}.jar"  
+          echo "✅ Renamed to: aidsfuscator-${SHORT_HASH}.jar"
 
-      # -----------------------------  
-      # Generate changelog (since last tag)  
-      # -----------------------------  
       - name: Generate changelog  
         run: |  
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")  
@@ -78,11 +61,8 @@ jobs:
             echo "_Changes since $LAST_TAG_" >> CHANGELOG.md  
             echo "" >> CHANGELOG.md  
             git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md  
-          fi  
+          fi
 
-      # -----------------------------  
-      # GitHub Release  
-      # -----------------------------  
       - name: Upload to GitHub Release  
         uses: softprops/action-gh-release@v2  
         with:  
