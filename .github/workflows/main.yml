@@ -3,7 +3,7 @@ name: build
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ v2 ]
 
 permissions:
   contents: write
@@ -34,11 +34,13 @@ jobs:
           SHORT_HASH=$(git rev-parse --short HEAD)  
           echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT  
           
-          ORIGINAL_JAR="target/jnt-1.0-SNAPSHOT-jar-with-dependencies.jar"  
+          # The assembly plugin creates the JAR directly as aidsfuscator.jar
+          ORIGINAL_JAR="target/aidsfuscator.jar"  
           NEW_JAR="target/aidsfuscator-${SHORT_HASH}.jar"  
           
           if [ ! -f "$ORIGINAL_JAR" ]; then  
             echo "❌ ERROR: Original JAR not found at $ORIGINAL_JAR"  
+            echo "Files in target directory:"  
             ls -la target/  
             exit 1  
           fi  
