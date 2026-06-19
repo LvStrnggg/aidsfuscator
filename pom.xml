@@ -79,6 +79,11 @@
                     </descriptorRefs>
                     <finalName>aidsfuscator</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
+                    <archive>
+                        <manifest>
+                            <mainClass>dev.lvstrng.aidsfuscator.Main</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
                 <executions>
                     <execution>
