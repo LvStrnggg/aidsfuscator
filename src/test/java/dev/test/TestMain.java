@@ -38,7 +38,7 @@ public class TestMain {
 
         Exclusions.GLOBAL.addClass("dev/lvstrng/aidsfuscator/api/*");
         context.run(
-                new InjectorTransformer(),
+             //   new InjectorTransformer(),
 
                 new FieldRenameTransformer(),
                 new MethodRenameTransformer(),
