@@ -50,6 +50,9 @@
       "enabled": true,
       "unifyAccess": true
     },
+    "parameterShuffle": {
+      "enabled": true
+    },
     "fixConstants": {
       "enabled": true
     },

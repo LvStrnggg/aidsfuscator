@@ -17,7 +17,7 @@ import dev.lvstrng.aidsfuscator.transform.impl.salt.ClassSaltTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.salt.MethodSaltTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LineNumberTransformer;
 import dev.lvstrng.aidsfuscator.transform.impl.strip.LocalVariableNameTransformer;
-import dev.test.transform.InjectorTransformer;
+//import dev.test.transform.InjectorTransformer;
 import dev.test.transform.MethodInlineTransformer;
 import dev.test.transform.MethodParameterObfuscationTransformer;
 import dev.test.transform.TestTransformer;
@@ -38,7 +38,7 @@ public class TestMain {
 
         Exclusions.GLOBAL.addClass("dev/lvstrng/aidsfuscator/api/*");
         context.run(
-                new InjectorTransformer(),
+             //   new InjectorTransformer(),
 
                 new FieldRenameTransformer(),
                 new MethodRenameTransformer(),
