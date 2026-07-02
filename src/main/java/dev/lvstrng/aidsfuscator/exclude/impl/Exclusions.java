@@ -34,6 +34,7 @@ public enum Exclusions {
     FLOW_FLATTEN("controlFlowFlatten", true, false, true),
     FLOW_SHUFFLE("controlFlowShuffle", true, false, true)
 
+    INVOKE_DYNAMIC("invokeDynamic", true, false, true)
     ;
 
     private final boolean excludesClass, excludesField, excludesMethod;
