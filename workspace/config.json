@@ -79,6 +79,11 @@
     },
     "referenceObfuscate": {
       "enabled": true
-    }
+    },
+    "invokeDynamic": {
+      "enabled": true,
+      "maxPerClass": 25,
+      "chance": 35
+   }
   }
 }
