@@ -1,6 +1,7 @@
 package dev.lvstrng.aidsfuscator.context.resource.handled;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import dev.lvstrng.aidsfuscator.context.Context;
@@ -9,6 +10,7 @@ import dev.lvstrng.aidsfuscator.log.Logger;
 import dev.lvstrng.aidsfuscator.naming.Mappings;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -48,8 +50,45 @@ public class FabricModJsonHandler implements HandledResource {
             }
         }
 
+        syncNestedJars(context, modJson);
+
         jos.putNextEntry(new ZipEntry(name));
         jos.write(gson.toJson(modJson).getBytes());
         jos.closeEntry();
+    }
+
+    private void syncNestedJars(Context context, JsonObject modJson) {
+        var jarEntries = modJson.getAsJsonArray("jars");
+        if(jarEntries == null)
+            return;
+
+        var actualPaths = new LinkedHashSet<>(context.resourceHandler().nestedJarPaths());
+        var synced = new JsonArray();
+
+        for(var element : jarEntries) {
+            if(!element.isJsonObject()) {
+                synced.add(element);
+                continue;
+            }
+
+            var jar = element.getAsJsonObject();
+            var file = jar.get("file");
+            if(file == null || !file.isJsonPrimitive() || !file.getAsJsonPrimitive().isString()) {
+                synced.add(element);
+                continue;
+            }
+
+            var path = file.getAsString();
+            if(actualPaths.remove(path))
+                synced.add(element);
+        }
+
+        for(var path : actualPaths) {
+            var jar = new JsonObject();
+            jar.add("file", new JsonPrimitive(path));
+            synced.add(jar);
+        }
+
+        modJson.add("jars", synced);
     }
 }

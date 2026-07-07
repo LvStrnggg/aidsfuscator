@@ -49,6 +49,8 @@ public class ArtifactImportProcessor implements IProcessor {
                 // jars in a jar are "fat jars"
                 if(name.endsWith(".jar")) {
                     context.libraryLoader().parseJar(bytes);
+                    if(context.resourceHandler().isNestedJar(name))
+                        context.resourceHandler().add(name, bytes);
                     continue;
                 }
 

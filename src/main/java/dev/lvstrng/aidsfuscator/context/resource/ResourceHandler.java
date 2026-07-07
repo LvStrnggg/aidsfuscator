@@ -7,7 +7,8 @@ import dev.lvstrng.aidsfuscator.context.resource.handled.FabricRefmapJsonHandler
 import dev.lvstrng.aidsfuscator.context.resource.handled.ManifestHandler;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.jar.JarOutputStream;
@@ -18,8 +19,10 @@ import java.util.zip.ZipEntry;
  * @author lvstrng
  */
 public class ResourceHandler {
+    private static final String NESTED_JAR_PREFIX = "META-INF/jars/";
+
     private final Context context;
-    private final Map<String, byte[]> resources = new HashMap<>();
+    private final Map<String, byte[]> resources = new LinkedHashMap<>();
 
     private final Map<String, Supplier<HandledResource>> handledResources = Map.of(
             "MANIFEST.MF", ManifestHandler::new,
@@ -58,6 +61,16 @@ public class ResourceHandler {
 
     public void add(String name, byte[] bytes) {
         resources.put(name, bytes);
+    }
+
+    public boolean isNestedJar(String name) {
+        return name.startsWith(NESTED_JAR_PREFIX) && name.endsWith(".jar");
+    }
+
+    public List<String> nestedJarPaths() {
+        return resources.keySet().stream()
+                .filter(this::isNestedJar)
+                .toList();
     }
 
     public Map<String, byte[]> resources() {
