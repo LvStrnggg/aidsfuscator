@@ -13,7 +13,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -33,8 +32,11 @@ public class JClass implements IAccessFlags, ISaltable<ClassSalt>, IHierarchical
     private final List<JMethod> methods;
 
     private ClassSalt salt;
+
     private JClass initializerClass; // class that initializes
     private final List<JClass> initializes; // initialized these classes
+
+    private boolean initOrderForeign;
 
     public JClass(ClassNode core) {
         this.properties = new PropertyContainer();
@@ -153,6 +155,14 @@ public class JClass implements IAccessFlags, ISaltable<ClassSalt>, IHierarchical
 
     public List<JClass> initializes() {
         return initializes;
+    }
+
+    public boolean isInitOrderForeign() {
+        return initOrderForeign;
+    }
+
+    public void setInitOrderForeign(boolean initOrderForeign) {
+        this.initOrderForeign = initOrderForeign;
     }
 
     @Override

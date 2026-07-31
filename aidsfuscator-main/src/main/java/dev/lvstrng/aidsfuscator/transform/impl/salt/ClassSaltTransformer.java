@@ -27,6 +27,9 @@ public class ClassSaltTransformer extends Transformer {
             if(clazz.isModule())
                 continue;
 
+            if(clazz.isInitOrderForeign())
+                continue;
+
             if(Exclusions.CLASS_SALTING.excluded(clazz))
                 continue;
 

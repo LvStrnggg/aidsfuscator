@@ -27,20 +27,28 @@ public class ClassInitOrderHandler {
         before = before.replace('.', '/');
         after = after.replace('.', '/');
 
-        var finalBefore = before;
-        if(context.jarClasses().stream().noneMatch(e -> e.name().equals(finalBefore))) {
-            Logger.warn("Skipping classInitOrder statement for pair (%s -> %s): %s class is not found or isn't in JAR classes list", before, after, before);
+        final String finalBefore = before;
+        var firstClass = context.jarClasses().stream().filter(e -> e.name().equals(finalBefore)).findFirst().orElse(null);
+
+        final String finalAfter = after;
+        var secondClass = context.jarClasses().stream().filter(e -> e.name().equals(finalAfter)).findFirst().orElse(null);
+
+        if(firstClass == null && secondClass == null) {
+            Logger.warn("Skipping initOrder statement for pair (%s -> %s): neither class is found or is in JAR classes list", before, after);
             return;
         }
 
-        var finalAfter = after;
-        if(context.jarClasses().stream().noneMatch(e -> e.name().equals(finalAfter))) {
-            Logger.warn("Skipping classInitOrder statement for pair (%s -> %s): %s class is not found or isn't in JAR classes list", before, after, after);
+        if(firstClass == null) {
+            Logger.warn("Class %s in initOrder pair (%s -> %s) isn't in JAR classes list; skipping class salting for %s to avoid initialization order issues", before, before, after, after);
+            secondClass.setInitOrderForeign(true);
             return;
         }
 
-        var firstClass = context.forName(before);
-        var secondClass = context.forName(after);
+        if(secondClass == null) {
+            Logger.warn("Class %s in initOrder pair (%s -> %s) isn't in JAR classes list; skipping class salting for %s to avoid initialization order issues", after, before, after, before);
+            firstClass.setInitOrderForeign(true);
+            return;
+        }
 
         secondClass.setFirstInitializerClass(firstClass);
         firstClass.initializes().add(secondClass);
