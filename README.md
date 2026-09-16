@@ -1,65 +1,78 @@
 # Aidsfuscator v2.x
-Aidsfuscator is a java bytecode obfuscator that aims to become one of, if not the best free obfuscators. 
+
+Aidsfuscator is a Java bytecode obfuscator that aims to become one of, if not the best, free obfuscators.
+
 <br>
-  Join the [discord server](https://discord.gg/4JGANqEZsK)!
+
+Join the [Discord server](https://discord.gg/4JGANqEZsK)!
+
 </br>
 
-### IF YOU'RE PLANNING TO CONTRIBUTE, SCROLL DOWN AND READ THE README!!!
+### IF YOU'RE PLANNING TO CONTRIBUTE, SCROLL DOWN AND READ THE README!
 
 ## Features
+
 - Trimming
 - Name obfuscation (optional aggressive overloading!)
-- Control Flow Flattening
-- Control Flow Shuffling
-- LocalVariableTable clearing
-- LineNumberTable mutation
+- Control flow flattening
+- Control flow shuffling
+- `LocalVariableTable` clearing
+- `LineNumberTable` mutation
 - Method salting
 - Class salting
 - Integer encryption
-- String Encryption (with anti-tamper + concatenation obfuscation)
+- String encryption (with anti-tampering and concatenation obfuscation)
 - Reference obfuscation (fields and methods)
 - Custom dictionary support
 - Fat JAR support
 - CLI
-- Config system
+- Configuration system
 - Exclusion system with annotations
 - Exclusion preset system
 - Automatic `fabric.mod.json` handling
 - Annotations API
 
 ## Why?
-Over these 2 years of me working with Java bytecode, I noticed that there's not many good free Java bytecode obfuscator options out there, so I decided to make one myself. It is also a passion project.
+
+Over the two years I have spent working with Java bytecode, I have noticed that there are not many good, free Java bytecode obfuscators available, so I decided to make one myself. It is also a passion project.
 
 ## Why v2?
-I made a poll on [Aidsfuscators/Cryptics discord server](https://discord.gg/4JGANqEZsK), asking if anyone wanted me to rewrite the v1 aidsfuscator. The majority said yes, so that's what makes me want to do this project.
 
-## How to use?
-- Download the zip file from [the releases page](https://github.com/LvStrnggg/aidsfuscator/releases).
-- Extract the ZIP file
-- Your config.json and exclusions.json files should stay in your workspace folder, everything else can stay outside.
+I created a poll on the [Aidsfuscator/Cryptics Discord server](https://discord.gg/4JGANqEZsK) asking whether anyone wanted me to rewrite Aidsfuscator v1. The majority said yes, so that is what motivated me to start this project.
+
+## How to Use
+
+- Download the ZIP file from [the releases page](https://github.com/LvStrnggg/aidsfuscator/releases).
+- Extract the ZIP file.
+- Your `config.json` and `exclusions.json` files should remain in your workspace folder; everything else can stay outside it.
 - Run the obfuscator with Java 25: `java -jar aidsfuscator.jar --config=config.json --exclusions=exclusions.json`
 
-### Default structure
+### Default Structure
 
-```
+```text
 aidsfuscator.jar
 workspace
 |- aidsfuscator-api.jar
 |- config.json
-|- initOrder.java
+|- initOrder.json
 |- references.json
 \- exclusions.json
 ```
 
-### What not to do
-- Do not run it with `java -jar aidsfuscator --config=workspace/config.json --exclusions=workspace/exclusions.json`. Aidsfuscator automatically prefixes `workspace/` before any workspace item, that isn't the libs folder or input file.
+### What Not to Do
+
+- Do not run it with `java -jar aidsfuscator --config=workspace/config.json --exclusions=workspace/exclusions.json`. Aidsfuscator automatically prefixes `workspace/` to any workspace item that is not the libraries folder or the input file.
 
 ### Aidsfuscator API
-Starting from v2.9.0, Aidsfuscator now has an API JAR file with a few annotations. This JAR can be added to your projects dependencies and you can annotate methods, fields and classes with these annotations to exclude them from obfuscation. These annotations get removed in the Aidsfuscators post-processor.
 
-## Using the obfuscator
-### Exclusions and inclusions
-You can add exclusions and inclusions with the follow format in the exclusions file:
+Starting with v2.9.0, Aidsfuscator includes an API JAR file with several annotations. This JAR can be added to your project's dependencies, allowing you to annotate methods, fields, and classes to exclude them from obfuscation. These annotations are removed by Aidsfuscator's post-processor.
+
+## Using the Obfuscator
+
+### Exclusions and Inclusions
+
+You can add exclusions and inclusions using the following format in the exclusions file:
+
 ```json
 {
   "token": {
@@ -71,7 +84,7 @@ You can add exclusions and inclusions with the follow format in the exclusions f
       "example/Exclusion.excludedMethod Ljava/lang/String;",
       "!example/Inclusions.includedMethod Ljava/lang/String;"
     ],
-    "method": [ 
+    "method": [
       "example/Exclusion.excludedMethod(IJZBDFSCLjava/lang/String;)V",
       "!example/Inclusion.includedMethod(IJZBDFSCLjava/lang/String;)V"
     ],
@@ -82,24 +95,26 @@ You can add exclusions and inclusions with the follow format in the exclusions f
 }
 ```
 
-Replace `token` with any of these:
-- `global` (Excludes a class globally from all obfuscation. Applies to classes only)
-- `renameClass` (Excludes a class from being renamed. Applies to classes only)
-- `renameField` (Excludes a field from being renamed. Applies to classes and fields)
-- `renameMethod` (Excludes a method from being renamed. Applies to classes and methods)
-- `localNames` (Excludes LVT (Local Variable Table) from getting its names cleared. Applies to classes and methods)
-- `lineNumbers` (Excludes LNT (Line Number Table) from getting obfuscated. Applies to classes and methods)
-- `trim` (Excludes trimming of a specific member. Applies to classes, fields and methods)
-- `methodSalting` (Excludes a method from being salted. Applies to classes and methods)
-- `classSalting` (Excludes a class from being salted. Applies to classes only)
-- `referenceObfuscate` (Excludes a method from getting references obfuscated in it. Applies to classes and methods)
-- `fixConstants` (Excludes a field from getting its value moved to the static initializer. Applies to classes and fields)
-- `integerEncrypt` (Excludes a class or method from getting its integer values encrypted. Applies to classes and methods)
-- `stringEncrypt` (Excludes a class or method from getting its string literals encrypted. Applies to classes and methods)
-- `controlFlowFlatten` (Excludes a method from getting its control flow flattened into a switch. Applies to classes and methods)
-- `controlFlowShuffle` (Excludes a method from getting its control flow shuffled. Applies to classes and methods)
+Replace `token` with any of the following:
 
-If you wanted to exclude every method with the name "test" and with any parameters with return type `void` from getting Control Flow Flattening and Integer Encryption applied to it, your exclusion file would look like this:
+- `global` (Excludes a class globally from all obfuscation. Applies to classes only.)
+- `renameClass` (Excludes a class from being renamed. Applies to classes only.)
+- `renameField` (Excludes a field from being renamed. Applies to classes and fields.)
+- `renameMethod` (Excludes a method from being renamed. Applies to classes and methods.)
+- `localNames` (Excludes the LVT (Local Variable Table) from having its names cleared. Applies to classes and methods.)
+- `lineNumbers` (Excludes the LNT (Line Number Table) from being obfuscated. Applies to classes and methods.)
+- `trim` (Excludes a specific member from being trimmed. Applies to classes, fields, and methods.)
+- `methodSalting` (Excludes a method from being salted. Applies to classes and methods.)
+- `classSalting` (Excludes a class from being salted. Applies to classes only.)
+- `referenceObfuscate` (Excludes a method from having its references obfuscated. Applies to classes and methods.)
+- `fixConstants` (Excludes a field from having its value moved to the static initializer. Applies to classes and fields.)
+- `integerEncrypt` (Excludes a class or method from having its integer values encrypted. Applies to classes and methods.)
+- `stringEncrypt` (Excludes a class or method from having its string literals encrypted. Applies to classes and methods.)
+- `controlFlowFlatten` (Excludes a method from having its control flow flattened into a switch. Applies to classes and methods.)
+- `controlFlowShuffle` (Excludes a method from having its control flow shuffled. Applies to classes and methods.)
+
+If you want to exclude every method named `test`, with any parameters and a `void` return type, from control flow flattening and integer encryption, your exclusions file should look like this:
+
 ```json
 {
   "controlFlowFlatten": {
@@ -116,9 +131,10 @@ If you wanted to exclude every method with the name "test" and with any paramete
 ```
 
 ### Class Initialization Order
-Class Initialization Order allows you to strengthen class salts by specifying pairs of classes that execute in order. The `initOrder.json` file is a JSON array of JSON arrays,
-but you have to add only two classes in the second array. For example:
-If you are sure that `pkg.Class2` first gets initialized by `pkg.Class1` and you add it to the file, your file should look like this:
+
+Class initialization order allows you to strengthen class salts by specifying pairs of classes that are initialized in a specific order. The `initOrder.json` file is a JSON array of JSON arrays, with exactly two classes in each inner array.
+
+For example, if you are sure that `pkg.Class2` is initialized by `pkg.Class1` first and you add it to the file, your file should look like this:
 
 ```json
 [
@@ -126,62 +142,68 @@ If you are sure that `pkg.Class2` first gets initialized by `pkg.Class1` and you
 ]
 ```
 
-You can add multiple of these class pairs and you can chain them, but you have to be certain that the order is true, otherwise wrong values may get outputted.
+You can add multiple class pairs and chain them, but you must be certain that the order is correct. Otherwise, incorrect values may be output.
 
 ### Reference Obfuscation Inclusions
-Reference Obfuscation Inclusions is a file that specifies reference obfuscation candidates. It uses the same matching system as in exclusions. Examples:
+
+The reference obfuscation inclusions file specifies reference obfuscation candidates. It uses the same matching system as the exclusions file.
+
 #### Methods
-- Any method called `test` in any class with any parameters with any return type
-  <br>
+
+- Any method named `test` in any class, with any parameters and any return type:
+
   `*.test(*)*`
-  </br>
-- Any method called `test` in any class with NO parameters with `void` return type
-  <br>
+
+- Any method named `test` in any class, with no parameters and a `void` return type:
+
   `*.test()V`
-  </br>
-- Any method called `test` in class `pkg.TestClass` with first parameter `long` with `java.lang.String` return type
-  <br>
+
+- Any method named `test` in class `pkg.TestClass`, with a `long` first parameter and a `java.lang.String` return type:
+
   `pkg/TestClass.test(J*)Ljava/lang/String;`
-  </br>
-- Any method called `test` in any class that ends with `subpkg.TestClass` with last parameter `boolean` with `int` return type
-  <br>
+
+- Any method named `test` in any class ending with `subpkg.TestClass`, with a `boolean` last parameter and an `int` return type:
+
   `*/subpkg/TestClass.test(*Z)I`
-  </br>
-- Any method called `test` in any class that's under a package called `pkg` with any parameters and return value (shortened)
-  <br>
+
+- Any method named `test` in any class under a package called `pkg`, with any parameters and any return type (shortened):
+
   `*/pkg/*.test(*`
-  </br>
 
 #### Fields
-- Any field called `test` in any class with any return type
-  <br>
+
+- Any field named `test` in any class, with any type:
+
   `*.test *`
-  </br>
-- Any field called `test` in any class with `boolean` return type
-  <br>
+
+- Any field named `test` in any class, with a `boolean` type:
+
   `*.test Z`
-  </br>
-- Any field called `test` in class `pkg.TestClass` with `java.lang.String` return type
-  <br>
+
+- Any field named `test` in class `pkg.TestClass`, with a `java.lang.String` type:
+
   `pkg/TestClass.test Ljava/lang/String;`
-  </br>
-- Any field called `test` in any class that ends with `subpkg.TestClass` with `int` return type
-  <br>
+
+- Any field named `test` in any class ending with `subpkg.TestClass`, with an `int` type:
+
   `*/subpkg/TestClass.test I`
-  </br>
-- Any field called `test` in any class that's under a package called `pkg` with any return value
-  <br>
+
+- Any field named `test` in any class under a package called `pkg`, with any type:
+
   `*/pkg/*.test *`
-  </br>
-Keep in mind: for fields, separate return type from name with a space.
+
+Keep in mind that, for fields, you must separate the type from the name with a space.
 
 ## Contributing
-Since I've received some pull requests that don't live up to my expectations, I wan't to avoid wasting other peoples' time, so:
-When contributing, I expect bug fixes rather than new features. I can decide on features myself: what's good and what's not.
+
+Since I have received some pull requests that do not meet my expectations, I want to avoid wasting other people's time. Therefore:
+
+When contributing, I expect bug fixes rather than new features. I can decide for myself which features are good and which are not.
 
 <div>
-  If you're thinking about adding a feature, please contact me on discord `lvstrng` to talk it out. Or create an issue as a suggestion, stating what you want to see getting added into the obfuscator. One good example was: instead of forking the repo, writing the transformer and creating a pull request a guy made an issue as a suggestion, stating that they want to see Zelix-style flow in the obfuscator. I told the user this is probably not needed, because the current control flow obfuscation already does its magic. This user avoided wasting tons of time on something that I wouldn't agree on either way.
+  If you're thinking about adding a feature, please contact me on Discord at `lvstrng` to discuss it. Alternatively, create an issue as a suggestion describing what you would like to see added to the obfuscator. One good example was when, instead of forking the repository, writing the transformer, and creating a pull request, someone created an issue suggesting Zelix-style control flow in the obfuscator. I told the user that this was probably unnecessary because the current control flow obfuscation already does its job. This user avoided wasting a great deal of time on something I would not have agreed with anyway.
 </div>
 
 ### TL;DR
-If you're thinking about adding new features to obfuscator, contact me on discord or make a suggestion. Otherwise, please only push bug fixes.
+
+If you're thinking about adding new features to the obfuscator, contact me on Discord or create a suggestion. Otherwise, please only submit bug fixes.
