@@ -131,7 +131,20 @@ public class InsnBuilder {
     public InsnBuilder _const(Object value) {
         if (value instanceof String str) {
             return appendStringLoad(str);
-        } else {
+        }
+        if (value instanceof Integer $int) {
+            return _int($int);
+        }
+        if (value instanceof Long $long) {
+            return _long($long);
+        }
+        if (value instanceof Float $float) {
+            return _float($float);
+        }
+        if (value instanceof Double $double) {
+            return _double($double);
+        }
+        else {
             list.add(new LdcInsnNode(value));
             return this;
         }
