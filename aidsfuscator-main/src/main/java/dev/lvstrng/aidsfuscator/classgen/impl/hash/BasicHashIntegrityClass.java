@@ -24,6 +24,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class BasicHashIntegrityClass implements IHashIntegrityClass {
     private static final int DIGEST_LEN = 32;
     private static final int ENTRY_LEN = DIGEST_LEN + Integer.BYTES;
+    private static MessageDigest hasher;
 
     private final Context context;
     private JClass clazz;
@@ -347,7 +348,10 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
 
     public static byte[] hash(byte[] byArray) {
         try {
-            return MessageDigest.getInstance("SHA-256").digest(byArray);
+            if (hasher == null) {
+                hasher = MessageDigest.getInstance("SHA-256");
+            }
+            return hasher.digest(byArray);
         } catch (NoSuchAlgorithmException _) {
             return null;
         }
