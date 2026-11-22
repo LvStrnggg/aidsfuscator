@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.LineNumberNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -22,12 +22,15 @@ import static org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings("all")
 public class BasicHashIntegrityClass implements IHashIntegrityClass {
+    private static final int DIGEST_LEN = 32;
+    private static final int ENTRY_LEN = DIGEST_LEN + Integer.BYTES;
+
     private final Context context;
     private JClass clazz;
     private JMethod retrieverMethod, hashMethod;
-    private JField mapField, stringField, valueField;
+    private JField mapField, keyField, valueField;
     private final String hashFileName;
-    private final Map<JClass, String> classHashes = new HashMap<>();
+    private final Map<JClass, byte[]> classHashes = new HashMap<>();
     private final Map<JClass, Integer> hashValues = new HashMap<>();
     private final Map<JClass, Integer> parameterValues = new HashMap<>();
 
@@ -40,7 +43,7 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
     public void init() {
         this.clazz = context.createClass("java/lang/Object", ACC_PUBLIC);
         this.mapField = clazz.createField(ACC_STATIC, context.dictionary().newFieldName(clazz, "Ljava/util/Map;"), "Ljava/util/Map;");
-        this.stringField = clazz.createField(ACC_PRIVATE, context.dictionary().newFieldName(clazz, "Ljava/lang/String;"), "Ljava/lang/String;");
+        this.keyField = clazz.createField(ACC_PRIVATE, context.dictionary().newFieldName(clazz, "Ljava/nio/ByteBuffer;"), "Ljava/nio/ByteBuffer;");
         this.valueField = clazz.createField(ACC_PRIVATE, context.dictionary().newFieldName(clazz, "I"), "I");
 
         this.createStaticInitializer();
@@ -57,12 +60,9 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
         var iVar = method.allocVar(Type.INT_TYPE);
         var hashBytesVar = method.allocVar();
         var keyBytesVar = method.allocVar();
-        var hashStringVar = method.allocVar();
+        var hashBufVar = method.allocVar();
 
         var ln0 = new LabelNode();
-        var ln1 = new LabelNode();
-        var ln2 = new LabelNode();
-        var ln3 = new LabelNode();
         var loopLabel = new LabelNode();
         var list = new InsnBuilder()
                 .label()
@@ -91,7 +91,7 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
                 ._var(ALOAD, bytesVar)
                 ._var(ILOAD, iVar)
                 ._var(ILOAD, iVar)
-                ._int(64)
+                ._int(DIGEST_LEN)
                 .iadd()
                 .method(INVOKESTATIC, "java/util/Arrays", "copyOfRange", "([BII)[B")
                 ._var(ASTORE, hashBytesVar)
@@ -100,28 +100,25 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
                 .add(new LineNumberNode(420, ln0))
                 ._var(ALOAD, bytesVar)
                 ._var(ILOAD, iVar)
-                ._int(64)
+                ._int(DIGEST_LEN)
                 .iadd()
                 ._var(ILOAD, iVar)
-                ._int(68)
+                ._int(ENTRY_LEN)
                 .iadd()
                 .method(INVOKESTATIC, "java/util/Arrays", "copyOfRange", "([BII)[B")
                 ._var(ASTORE, keyBytesVar)
 
                 .label()
-                .type(NEW, "java/lang/String")
-                .dup()
                 ._var(ALOAD, hashBytesVar)
-                .method(INVOKESPECIAL, "java/lang/String", "<init>", "([B)V")
-                .method(INVOKEVIRTUAL, "java/lang/String", "intern", "()Ljava/lang/String;")
-                ._var(ASTORE, hashStringVar)
+                .method(INVOKESTATIC, "java/nio/ByteBuffer", "wrap", "([B)Ljava/nio/ByteBuffer;")
+                ._var(ASTORE, hashBufVar)
 
                 .label()
                 .field(GETSTATIC, clazz.name(), mapField.name(), mapField.desc())
-                ._var(ALOAD, hashStringVar)
+                ._var(ALOAD, hashBufVar)
                 .type(NEW, clazz.name())
                 .dup()
-                ._var(ALOAD, hashStringVar)
+                ._var(ALOAD, hashBufVar)
 
                 ._var(ALOAD, keyBytesVar)
                 ._int(0)
@@ -152,12 +149,12 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
                 ._int(0xff)
                 .iand()
                 .ior()
-                .method(INVOKESPECIAL, clazz.name(), "<init>", "(Ljava/lang/String;I)V")
+                .method(INVOKESPECIAL, clazz.name(), "<init>", "(Ljava/nio/ByteBuffer;I)V")
                 .method(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
                 .pop()
 
                 .label()
-                .iinc(iVar, 68)
+                .iinc(iVar, ENTRY_LEN)
 
                 .label()
                 ._var(ILOAD, iVar)
@@ -174,11 +171,11 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
 
     private void createInitializer() {
         var name = "<init>";
-        var desc = "(Ljava/lang/String;I)V";
+        var desc = "(Ljava/nio/ByteBuffer;I)V";
         var method = clazz.createMethod(0, name, desc);
 
         var thisVar = method.allocVar();
-        var hashVar = method.allocVar();
+        var keyBufVar = method.allocVar();
         var valueVar = method.allocVar();
 
         new InsnBuilder(method.insns())
@@ -188,8 +185,8 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
 
                 .label()
                 ._var(ALOAD, thisVar)
-                ._var(ALOAD, hashVar)
-                .field(PUTFIELD, clazz.name(), stringField.name(), stringField.desc())
+                ._var(ALOAD, keyBufVar)
+                .field(PUTFIELD, clazz.name(), keyField.name(), keyField.desc())
 
                 .label()
                 ._var(ALOAD, thisVar)
@@ -202,64 +199,17 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
     }
 
     private void createHasher() {
-        var desc = "([B)Ljava/lang/String;";
+        var desc = "([B)[B";
         this.hashMethod = clazz.createMethod(ACC_PUBLIC | ACC_STATIC, context.dictionary().newMethodName(clazz, desc), desc);
 
         var byteArrVar = hashMethod.allocVar();
-        var hashVar = hashMethod.allocVar();
-        var sbVar = hashMethod.allocVar();
-        var iVar = hashMethod.allocVar(Type.INT_TYPE);
 
-        var loopLbl = new LabelNode();
-        var list = new InsnBuilder(hashMethod.insns())
+        new InsnBuilder(hashMethod.insns())
                 .label()
                 ._const("SHA-256")
                 .method(INVOKESTATIC, "java/security/MessageDigest", "getInstance", "(Ljava/lang/String;)Ljava/security/MessageDigest;")
                 ._var(ALOAD, byteArrVar)
                 .method(INVOKEVIRTUAL, "java/security/MessageDigest", "digest", "([B)[B")
-                ._var(ASTORE, hashVar)
-
-                .label()
-                .type(NEW, "java/lang/StringBuilder")
-                .dup()
-                .method(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V")
-                ._var(ASTORE, sbVar)
-
-                .label()
-                ._int(0)
-                ._var(ISTORE, iVar)
-
-                .label(loopLbl)
-                ._var(ALOAD, sbVar)
-                ._const("%02x")
-                ._int(1)
-                .anewarray("java/lang/Object")
-                .dup()
-                ._int(0)
-                ._var(ALOAD, hashVar)
-                ._var(ILOAD, iVar)
-                .baload()
-                ._int(0xff)
-                .iand()
-                .i2b()
-                .method(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;")
-                .aastore()
-                .method(INVOKESTATIC, "java/lang/String", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;")
-                .method(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
-                .pop()
-
-                .label()
-                .iinc(iVar, 1)
-
-                .label()
-                ._var(ILOAD, iVar)
-                ._var(ALOAD, hashVar)
-                .arraylength()
-                .jump(IF_ICMPLT, loopLbl)
-
-                .label()
-                ._var(ALOAD, sbVar)
-                .method(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
                 ._areturn()
                 ;
     }
@@ -325,7 +275,8 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
                 .field(GETSTATIC, clazz.name(), mapField.name(), mapField.desc())
                 ._var(ALOAD, inVar)
                 .method(INVOKEVIRTUAL, "java/io/InputStream", "readAllBytes", "()[B")
-                .method(INVOKESTATIC, clazz.name(), hashMethod.name() /*"a"*/, hashMethod.desc() /*"([B)Ljava/lang/String;"*/)
+                .method(INVOKESTATIC, clazz.name(), hashMethod.name(), hashMethod.desc())
+                .method(INVOKESTATIC, "java/nio/ByteBuffer", "wrap", "([B)Ljava/nio/ByteBuffer;")
                 .method(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;")
                 .type(CHECKCAST, clazz.name())
                 ._var(ASTORE, instanceVar)
@@ -334,8 +285,8 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
                 ._var(ALOAD, instanceVar)
                 .field(GETFIELD, clazz.name(), valueField.name(), valueField.desc())
                 ._var(ALOAD, instanceVar)
-                .field(GETFIELD, clazz.name(), stringField.name(), stringField.desc())
-                .method(INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I")
+                .field(GETFIELD, clazz.name(), keyField.name(), keyField.desc())
+                .method(INVOKEVIRTUAL, "java/nio/ByteBuffer", "hashCode", "()I")
                 ._var(ILOAD, keyVar)
                 .ixor()
                 .ixor()
@@ -373,36 +324,30 @@ public class BasicHashIntegrityClass implements IHashIntegrityClass {
 
     @Override
     public void addResource() throws IOException {
-        if(hashValues.isEmpty())
+        if (hashValues.isEmpty())
             return;
 
         var content = new ByteArrayOutputStream();
-        for(var entry : classHashes.entrySet()) {
+        for (var entry : classHashes.entrySet()) {
             var hashVal = hashValues.get(entry.getKey());
-            if(hashVal == null)
+            if (hashVal == null)
                 continue;
 
             var paramVal = paramValue(entry.getKey());
-            var hashHash = entry.getValue().hashCode();
-            content.write(entry.getValue().getBytes(StandardCharsets.UTF_8));
-            content.write(intToBytes(hashVal ^ paramVal ^ hashHash));
+            byte[] rawDigest = entry.getValue();
+            int digestHash = ByteBuffer.wrap(rawDigest).hashCode();
+
+            content.write(rawDigest);
+            content.write(intToBytes(hashVal ^ paramVal ^ digestHash));
         }
 
         content.close();
         context.resourceHandler().add(hashFileName, content.toByteArray());
     }
 
-    public static String hash(byte[] byArray) {
+    public static byte[] hash(byte[] byArray) {
         try {
-            var byArray2 = MessageDigest.getInstance("SHA-256").digest(byArray);
-            var stringBuilder = new StringBuilder();
-
-            var n = 0;
-            do {
-                stringBuilder.append(String.format("%02x", (byte)(byArray2[n] & 0xFF)));
-            } while (++n < byArray2.length);
-
-            return stringBuilder.toString();
+            return MessageDigest.getInstance("SHA-256").digest(byArray);
         } catch (NoSuchAlgorithmException _) {
             return null;
         }
